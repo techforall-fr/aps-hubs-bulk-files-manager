@@ -497,7 +497,12 @@ public class HangfireJobs
                     var version = await APSHelpers.CreateFirstVersion(bulkUpload.ProjectId,
                         bulkUploadFile.TargetFileName, bulkUploadFile.FolderUrn, bulkUploadFile.BucketKey, bulkUploadFile.ObjectId);
                     bulkUploadFile.VersionId = version.Data.Id;
+                    bulkUploadFile.ItemId = version.Data.Id;
                     bulkUploadFile.WebUrl = version.Links.Self.Href;  // Issue with the new SDK: missing -> version.Link.WebView.Href
+                    
+                    // Ajouter le Custom Attribute "Alias" avec le nom du fichier
+                    await APSHelpers.AddCustomAttributeToItem(bulkUpload.ProjectId, bulkUploadFile.ItemId, "Alias", bulkUploadFile.TargetFileName);
+                    bulkUploadFile.AddLogs($"Custom Attribute 'Alias' ajouté avec la valeur '{bulkUploadFile.TargetFileName}'");
                 }
                 catch (FlurlHttpException e)
                 {
@@ -519,6 +524,10 @@ public class HangfireJobs
                     bulkUploadFile.ItemId, bulkUploadFile.BucketKey, bulkUploadFile.ObjectId);
                 bulkUploadFile.VersionId = version.Data.Id;
                 bulkUploadFile.WebUrl = version.Links.Self.Href;  // Issue with the new SDK: missing -> version.Link.WebView.Href
+                
+                // Ajouter le Custom Attribute "Alias" avec le nom du fichier
+                await APSHelpers.AddCustomAttributeToItem(bulkUpload.ProjectId, bulkUploadFile.ItemId, "Alias", bulkUploadFile.TargetFileName);
+                bulkUploadFile.AddLogs($"Custom Attribute 'Alias' ajouté avec la valeur '{bulkUploadFile.TargetFileName}'");
             }
 
             _context.BulkUploadFiles.Update(bulkUploadFile);

@@ -400,6 +400,63 @@ namespace Bulk_Uploader_Electron.Utilities
         #endregion
 
 
+        public static async Task<bool> AddCustomAttributeToItem(string projectId, string itemId, string attributeName, string attributeValue)
+        {
+            try
+            {
+                projectId = projectId.Split(".")[0] == "b" ? projectId : "b." + projectId;
+                var token = await TwoLeggedTokenManager.GetTwoLeggedToken();
+
+                // Payload pour ajouter un custom attribute
+                var patchPayload = new
+                {
+                    jsonapi = new { version = "1.0" },
+                    data = new
+                    {
+                        type = "items",
+                        id = itemId,
+                        attributes = new
+                        {
+                            extension = new
+                            {
+                                type = "items:autodesk.bim360:File",
+                                version = "1.0",
+                                data = new
+                                {
+                                    customAttributes = new[]
+                                    {
+                                        new
+                                        {
+                                            name = attributeName,
+                                            value = attributeValue
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                var url = $"https://developer.api.autodesk.com/data/v1/projects/{projectId}/items/{itemId}";
+                var response = await url
+                    .WithOAuthBearerToken(token)
+                    .PatchJsonAsync(patchPayload);
+
+                return response.StatusCode == 200;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to add custom attribute '{attributeName}' to item");
+                Log.Error($"Failed to add custom attribute '{attributeName}' to item");
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+                // Ne pas lancer l'exception pour ne pas bloquer l'upload si l'ajout du custom attribute échoue
+                return false;
+            }
+        }
+        #endregion
+
+
         #region Versions
         public static async Task<Autodesk.DataManagement.Model.ModelVersion> CreateNextVersion(string projectId, string fileName, string itemId,string bucketKey, string objectId)
         {
